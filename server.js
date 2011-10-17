@@ -1,8 +1,6 @@
 var express = require('express'),
   app = express.createServer();
 
-app.use( express.staticProvider( __dirname + '/img' ));
-
 var randomise = function ( a ) {
   for ( var i = 0, l = a.length; i < l; i ++ ) {
     a[i]._key = i;
