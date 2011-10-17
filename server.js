@@ -32,13 +32,14 @@ var input = function ( c, q ) {
   var r = '';
   var all = randomise( data[c][1] );
   var answers = [ data[c][1][q] ];
-  for ( i in randomise( data[c][1] ).slice( 0, multipleChoices - 1 )) {
-      answers.push( data[c][1][i] );
+  for ( i in all ) {
+    if (( all[i]._key != q ) && ( answers.length < multipleChoices )) {
+      answers.push( all[i] );
+    }
   }
-  console.log( 'now answers are' );
-  console.log( answers );
+  answers = randomise( answers );
   for ( i in answers ) {
-    r += '<label><input type="radio" value="' + i + '" />' + answers[i][0] + '</label>';
+    r += '<button type="submit" value="' + i + '"><span>' + answers[i][0] + '</span></button>';
   }
   return r;
 };
@@ -46,6 +47,7 @@ var input = function ( c, q ) {
 var answer = function ( params ) {
   console.log( 'answer()' );
   console.log( params );
+  return p( "Sorry I still don't know right from wrong, here is what I got:", JSON.stringify( params ));
   return p( validate( params ) ? 'Right!' : 'Wrong :-(' );
 };
 
@@ -65,7 +67,7 @@ var question = function ( params ) {
   if ( ! data[c][1][q] ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
-  return '<form method="post">' + data[c][0] + ' ' +  data[c][1][q][1] + '? ' + input( c, q ) + ' <input type="submit" value="Go" /></form>';
+  return '<form>' + data[c][0] + ' ' +  data[c][1][q][1] + '? ' + input( c, q ) + '</form>';
 };
 
 var categories = function ( ) {
