@@ -9,6 +9,7 @@ var randomise = function ( a ) {
 };
 
 var multipleChoices = 3;
+
 var htmlWrapper = function ( req, res, next ) {
   var send = res.send;
   res.send = function ( foo ) {
@@ -19,6 +20,25 @@ var htmlWrapper = function ( req, res, next ) {
 };
 app.use( htmlWrapper );
 
+var answer = function ( req, res, next ) {
+  var send = res.send;
+  res.send = function ( foo ) {
+    res.send = send;
+    var html = '';
+    if ( validate( req.query )) {
+      html += "Right!";
+      
+    }
+    else {
+      html += "Wrong!";
+    }
+    html += foo;
+    res.send( html );
+  }
+  next();
+};
+app.use( answer );
+
 var p = function ( ) {
   var i, r = '';
   for ( i in arguments ) {
@@ -28,7 +48,6 @@ var p = function ( ) {
 };
 
 var input = function ( c, q ) {
-  console.log( 'input( ' + c + ', ' + q + ' )' );
   var r = '';
   var all = randomise( data[c][1] );
   var answers = [ data[c][1][q] ];
@@ -39,22 +58,19 @@ var input = function ( c, q ) {
   }
   answers = randomise( answers );
   for ( i in answers ) {
-    r += '<button type="submit" value="' + i + '"><span>' + answers[i][0] + '</span></button>';
+    r += '<button name="answer" type="submit" value="' + answers[i][0] + '"><span>' + answers[i][0] + '</span></button>';
   }
   return r;
 };
 
-var answer = function ( params ) {
-  console.log( 'answer()' );
-  console.log( params );
-  return p( "Sorry I still don't know right from wrong, here is what I got:", JSON.stringify( params ));
-  return p( validate( params ) ? 'Right!' : 'Wrong :-(' );
-};
-
 var validate = function ( params ) {
-  console.log( 'validate()' );
-  console.log( params );
-  return true;
+  if ( ! data[params.c] ) {
+    return false;
+  }
+  if ( ! data[params.c][1][params.q] ) {
+    return false;
+  }
+  return data[params.c][1][params.q][0] === params.answer;
 };
 
 var question = function ( params ) {
@@ -62,12 +78,11 @@ var question = function ( params ) {
   var q = params.question - 1;
   if ( ! data[c] ) {
     c = Math.floor( Math.random( ) * data.length );
-    console.log( data[c] );
   }
   if ( ! data[c][1][q] ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
-  return '<form>' + data[c][0] + ' ' +  data[c][1][q][1] + '? ' + input( c, q ) + '</form>';
+  return '<form><input type="hidden" name="c" value="' + c + '" /><input type="hidden" name="q" value="' + q + '" />' + data[c][0] + ' ' +  data[c][1][q][1] + '? ' + input( c, q ) + '</form>';
 };
 
 var categories = function ( ) {
@@ -83,14 +98,10 @@ app.get( '/', function( req, res, next ) {
 } );
 
 app.get( '/random', function( req, res, next ) {
-  res.send( question( req.params ));
+  res.send(( req.params.answer ? answer( req.params ) : '' ) + question( req.params ));
 } );
 
-app.post( '/random', function( req, res, next ) {
-  res.send( answer( req.params ) + question( req.params ));
-} );
-
-app.get( '/category/:category', function( req, res, next ) {
+app.get( '/category/:category/random', function( req, res, next ) {
   res.send( question( req.params ));
 } );
 
