@@ -1,8 +1,13 @@
 body {
   padding: 1em;
-  font-size: 1.5em;
+  font-size: 1em;
   font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 a {
   color: #00b7ff;
+}
+button {
+  width: 100%;
+  display: block;
+  margin-top: 0.5em;
 }
