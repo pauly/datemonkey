@@ -2,7 +2,7 @@ p #{title}
 ul#data
   for val, key in data
     li
-      a(href='/category/' + key) #{val[0]}
+      a(href='/category/' + ( 1 + key)) #{val[0]}
   li
     a(href='/random') Or try a lucky dip
 p Only "What was X in year Y" right now but more on the way... 
