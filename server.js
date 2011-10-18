@@ -5,27 +5,35 @@
  * @date    Mon 17 Oct 2011 18:27:10 BST
  */
 
-var express = require('express'),
-  app = express.createServer();
+var title = 'Date monkey',
+  express = require('express'),
+  app = module.exports = express.createServer();
+
+// Configuration
+
+app.configure(function(){
+  app.set('views', __dirname + '/views');
+  app.set('view engine', 'jade');
+  app.use(express.bodyParser());
+  app.use(express.methodOverride());
+  app.use(require('stylus').middleware({ src: __dirname + '/public' }));
+  app.use(app.router);
+  app.use(express.static(__dirname + '/public'));
+});
+
+app.configure('development', function(){
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+});
+
+app.configure('production', function(){
+  app.use(express.errorHandler()); 
+});
 
 var shuffle = function ( a ) {
   return a.sort( function () { return Math.random() > 0.5 } );
 };
 
 var multipleChoices = 3;
-
-// Quick middleware example, better to use templating though probably
-var htmlWrapper = function ( req, res, next ) {
-  if ( req.url.indexOf('.css') === -1 ) {
-    var send = res.send;
-    res.send = function ( foo ) {
-      res.send = send;
-      res.send( '<html><head><title>Date monkey quiz tester in nodejs</title><link rel="stylesheet" type="text/css" media="screen and (max-device-width: 480px)" href="/mobile.css" /></head><body>' + foo + '<footer><a href="/">Date monkey quiz tester</a> in nodejs <p>&copy; <a href="http://www.clarkeology.com">Paul Clarke</a>. Hosted by <a href="http://nodester.com">nodester.com</a>.</p></footer></body></html>' );
-    }
-  }
-  next();
-};
-app.use( htmlWrapper );
 
 // Just a helper method, does not save much
 var p = function ( ) {
@@ -52,7 +60,7 @@ var multipleAnswersOneCategory = function ( c, q ) {
     }
   }
   for ( i in shuffle( answers )) {
-    r += '<button name="answer" type="submit" value="' + answers[i][0] + '"><span>' + answers[i][0] + '</span></button>';
+    r += '<button name="answer" type="submit" value="' + answers[i][0] + '"><span>' + answers[i][0] + '</span></button> ';
   }
   return r;
 };
@@ -85,34 +93,32 @@ var question = function ( req, res ) {
   return r;
 };
 
-var index = function ( ) {
-  var r = '', i;
-  r += p( 'Choose a category:' );
-  for ( i in data ) {
-    r += p( '<a href="/category/' + ( 1 + parseInt( i )) + '">' + data[i][0] + '</a>' );
-  }
-  r += p( '<a href="/random">Or just go for a lucky dip</a>...' );
-  r += p( 'Only "What was X in year Y" right now but more on the way... <a href="pauly+datemonkey@clarkeology.com?Subject=Some+data+in+value,year+columns">Got some data for me</a>?' );
-  return r;
-}
-
 app.get( '/', function( req, res, next ) {
-  res.send( index( ));
-} );
-
-app.all( '/mobile.css', function( req, res ) {
-  res.send( 'body { font-size: 2em; }' );
+  res.render( 'index.jade', {
+    siteTitle: title,
+    title: title + ' - experiments in nodejs',
+    data: data
+  } );
 } );
 
 app.all( '/category/:category', function( req, res ) {
-  res.send( question( req, res ));
+  res.render( 'question.jade', {
+    siteTitle: title,
+    title: title + '- question',
+    content: question( req, res )
+  } );
 } );
 
 app.all( '/random', function( req, res ) {
-  res.send( question( req, res ));
+  res.render( 'question.jade', {
+    siteTitle: title,
+    title: title + '- question',
+    content: question( req, res )
+  } );
 } );
 
 app.listen( 12248 );
+console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 
 // All the data in a big array, individual answers should be [ "Answer", year, "optional trivia (unused so far)" ]
 var data = [
