@@ -1,44 +1,31 @@
+/**
+ * Test yourself on dates, an experiment in nodejs
+ * 
+ * @author  PC <paul.clarke+paulclarke@holidayextras.com>
+ * @date    Mon 17 Oct 2011 18:27:10 BST
+ */
+
 var express = require('express'),
   app = express.createServer();
 
-var randomise = function ( a ) {
-  for ( var i = 0, l = a.length; i < l; i ++ ) {
-    a[i]._key = i;
-  }
+var shuffle = function ( a ) {
   return a.sort( function () { return Math.random() > 0.5 } );
 };
 
 var multipleChoices = 3;
 
+// Quick middleware example, better to use templating though probably
 var htmlWrapper = function ( req, res, next ) {
   var send = res.send;
   res.send = function ( foo ) {
     res.send = send;
-    res.send( '<html><head><title>Date monkey nodejs tests</title></head><body>' + foo + '<footer><p>&copy; <a href="http://www.clarkeology.com">Paul Clarke</a></p></footer></body></html>' );
+    res.send( '<html><head><title>Date monkey nodejs tests</title></head><body>' + foo + '<footer><a href="/">Date monkey quiz tester</a> in nodejs <p>&copy; <a href="http://www.clarkeology.com">Paul Clarke</a>. Hosted by <a href="http://nodester.com">nodester.com</a>.</p></footer></body></html>' );
   }
   next();
 };
 app.use( htmlWrapper );
 
-var answer = function ( req, res, next ) {
-  var send = res.send;
-  res.send = function ( foo ) {
-    res.send = send;
-    var html = '';
-    if ( validate( req.query )) {
-      html += "Right!";
-      
-    }
-    else {
-      html += "Wrong!";
-    }
-    html += foo;
-    res.send( html );
-  }
-  next();
-};
-app.use( answer );
-
+// Just a helper method, does not save much
 var p = function ( ) {
   var i, r = '';
   for ( i in arguments ) {
@@ -47,70 +34,76 @@ var p = function ( ) {
   return r;
 };
 
+// Generate a multiple choice input for a question, in a category
 var input = function ( c, q ) {
+  return multipleAnswersOneCategory( c, q );
+};
+
+// Generate a multiple choice input for a question, in a category
+var multipleAnswersOneCategory = function ( c, q ) {
   var r = '';
-  var all = randomise( data[c][1] );
+  var all = shuffle( data[c][1].slice( 0 ));
   var answers = [ data[c][1][q] ];
   for ( i in all ) {
-    if (( all[i]._key != q ) && ( answers.length < multipleChoices )) {
+    if (( all[i][0] != data[c][1][q][0] ) && ( answers.length < multipleChoices )) {
       answers.push( all[i] );
     }
   }
-  answers = randomise( answers );
-  for ( i in answers ) {
+  for ( i in shuffle( answers )) {
     r += '<button name="answer" type="submit" value="' + answers[i][0] + '"><span>' + answers[i][0] + '</span></button>';
   }
   return r;
 };
 
-var validate = function ( params ) {
-  if ( ! data[params.c] ) {
-    return false;
+// Show a new question, and the answer to the last question
+var question = function ( req, res ) {
+  var r = '';
+  if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
+    if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
+      req.query.correct = 1 + parseInt( req.query.correct );
+      r += p( "Right!" );
+    }
+    else {
+      r += p( "Wrong!", "It was " + data[req.query.c][1][req.query.q][0] );
+    }
+    req.query.taken = 1 + parseInt( req.query.taken );
+    r += p( req.query.correct + ' / ' + req.query.taken );
   }
-  if ( ! data[params.c][1][params.q] ) {
-    return false;
-  }
-  return data[params.c][1][params.q][0] === params.answer;
-};
-
-var question = function ( params ) {
-  var c = params.category - 1;
-  var q = params.question - 1;
+  var c = req.params.category - 1;
+  var q = req.params.question - 1;
   if ( ! data[c] ) {
     c = Math.floor( Math.random( ) * data.length );
   }
   if ( ! data[c][1][q] ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
-  return '<form><input type="hidden" name="c" value="' + c + '" /><input type="hidden" name="q" value="' + q + '" />' + data[c][0] + ' ' +  data[c][1][q][1] + '? ' + input( c, q ) + '</form>';
+  r += '<form><input type="hidden" name="taken" value="' + ( req.query.taken || 0 ) + '" /><input type="hidden" name="correct" value="' + ( req.query.correct || 0 ) + '" /><input type="hidden" name="c" value="' + c + '" /><input type="hidden" name="q" value="' + q + '" />';
+  r += data[c][0] + ' ' + data[c][1][q][1] + '? ' + input( c, q );
+  r += '</form>';
+  return r;
 };
 
-var categories = function ( ) {
+var index = function ( ) {
   var r = '', i;
+  r += p( 'Choose a category:' );
   for ( i in data ) {
-    r += p( '<a href="">' + data[i][0] + '</a>' );
+    r += p( '<a href="/category/' + ( 1 + parseInt( i )) + '">' + data[i][0] + '</a>' );
   }
+  r += p( '<a href="/random">Or just go for a lucky dip</a>...' );
+  r += p( 'Only "What was X in year Y" right now but more on the way... <a href="pauly+datemonkey@clarkeology.com?Subject=Some+data+in+value,year+columns">Got some data for me</a>?' );
   return r;
 }
 
 app.get( '/', function( req, res, next ) {
-  res.send( categories( ));
+  res.send( index( ));
 } );
 
-app.get( '/random', function( req, res, next ) {
-  res.send(( req.params.answer ? answer( req.params ) : '' ) + question( req.params ));
+app.all( '/category/:category', function( req, res ) {
+  res.send( question( req, res ));
 } );
 
-app.get( '/category/:category/random', function( req, res, next ) {
-  res.send( question( req.params ));
-} );
-
-app.get( '/category/:category/question/:question', function( req, res, next ) {
-  res.send( question( req.params ));
-} );
-
-app.all( /(.*)/, function( req, res ) {
-  res.send( p( 'Sorry, did not find ' + req.params[0] ));
+app.all( 'random', function( req, res ) {
+  res.send( question( req, res ));
 } );
 
 app.listen( 12248 );
@@ -124,10 +117,8 @@ var data = [
       [ "Slumdog Millionaire", 2008 ],
       [ "No Country For Old Men", 2007 ],
       [ "The Departed", 2006 ],
-      [ "Crash", 2005 ]
-
-
-      /* [ "Million Dollar Baby", 2004 ],
+      [ "Crash", 2005 ],
+      [ "Million Dollar Baby", 2004 ],
       [ "Lord of the Rings: ROTK", 2003 ],
       [ "Chicago", 2002 ],
       [ "A Beautiful Mind", 2001 ],
@@ -161,7 +152,7 @@ var data = [
       [ "The Sting", 1973 ],
       [ "The Godfather", 1972 ],
       [ "The French Connection", 1971 ],
-      [ "Patton", 1970 ] */
+      [ "Patton", 1970 ]
     ]
   ],
   [
@@ -178,6 +169,67 @@ var data = [
       [ "Natalie Portman", 2010 ],
       [ "Sandra Bullock", 2009 ],
       [ "Kate Winslet", 2008 ]
+    ]
+  ],
+  [
+    'BBC sports personality of the year',
+    [
+      [ "Ryan Giggs", 2009, "football" ],
+      [ "Chris Hoy", 2008, "cycling" ],
+      [ "Joe Calzaghe", 2007, "boxing" ],
+      [ "Zara Phillips", 2006, "equestrian" ],
+      [ "Andrew Flintoff", 2005, "cricket" ],
+      [ "Kelly Holmes", 2004, "athletics" ],
+      [ "Jonny Wilkinson", 2003, "rugby" ],
+      [ "Paula Radcliffe", 2002, "athletics" ],
+      [ "David Beckham", 2001, "football" ],
+      [ "Steve Redgrave", 2000, "rowing" ],
+      [ "Lennox Lewis", 1999, "boxing" ],
+      [ "Michael Owen", 1998, "football" ],
+      [ "Greg Rusedski", 1997, "tennis" ],
+      [ "Damon Hill", 1996, "motor racing" ],
+      [ "Jonathan Edwards", 1995, "athletics" ],
+      [ "Damon Hill", 1994, "motor sport" ],
+      [ "Linford Christie", 1993, "athletics" ],
+      [ "Nigel Mansell", 1992, "motor racing" ],
+      [ "Liz McColgan", 1991, "athletics" ],
+      [ "Paul Gascoigne", 1990, "football" ],
+      [ "Nick Faldo", 1989, "golf" ],
+      [ "Steve Davis", 1988, "snooker" ],
+      [ "Fatima Whitbread", 1987, "athletics" ],
+      [ "Nigel Mansell", 1986, "motor racing" ],
+      [ "Barry McGuigan", 1985, "boxing" ],
+      [ "Jayne Torvill and Christopher Dean", 1984, "ice skating" ],
+      [ "Steve Cram", 1983, "athletics" ],
+      [ "Daley Thompson", 1982, "athletics" ],
+      [ "Ian Botham", 1981, "cricket" ],
+      [ "Robin Cousins", 1980, "ice skating" ],
+      [ "Sebastian Coe", 1979, "athletics" ],
+      [ "Steve Ovett", 1978, "athletics" ],
+      [ "Virginia Wade", 1977, "tennis" ],
+      [ "John Curry", 1976, "ice skating" ],
+      [ "David Steele", 1975, "cricket" ],
+      [ "Brendan Foster", 1974, "athletics" ],
+      [ "Jackie Stewart", 1973, "motor racing" ],
+      [ "Mary Peters", 1972, "athletics" ],
+      [ "Princess Anne", 1971, "equestrian" ],
+      [ "Henry Cooper", 1970, "boxing" ],
+      [ "Ann Jones", 1969, "tennis" ],
+      [ "David Hemery", 1968, "athletics" ],
+      [ "Henry Cooper", 1967, "boxing" ],
+      [ "Bobby Moore", 1966, "football" ],
+      [ "Tommy Simpson", 1965, "cycling" ],
+      [ "Mary Rand", 1964, "athletics" ],
+      [ "Dorothy Hyman", 1963, "athletics" ],
+      [ "Anita Lonsbrough", 1962, "swimming" ],
+      [ "Stirling Moss", 1961, "motor racing" ],
+      [ "David Broome", 1960, "showjumping" ],
+      [ "John Surtees", 1959, "motor cycling" ],
+      [ "Ian Black", 1958, "swimming" ],
+      [ "Dai Rees", 1957, "golf" ],
+      [ "Jim Laker", 1956, "cricket" ],
+      [ "Gordon Pirie", 1955, "athletics" ],
+      [ "Chris Chataway", 1954, "athletics" ]
     ]
   ]
 ];
