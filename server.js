@@ -16,10 +16,12 @@ var multipleChoices = 3;
 
 // Quick middleware example, better to use templating though probably
 var htmlWrapper = function ( req, res, next ) {
-  var send = res.send;
-  res.send = function ( foo ) {
-    res.send = send;
-    res.send( '<html><head><title>Date monkey nodejs tests</title></head><body>' + foo + '<footer><a href="/">Date monkey quiz tester</a> in nodejs <p>&copy; <a href="http://www.clarkeology.com">Paul Clarke</a>. Hosted by <a href="http://nodester.com">nodester.com</a>.</p></footer></body></html>' );
+  if ( req.url.indexOf('.css') === -1 ) {
+    var send = res.send;
+    res.send = function ( foo ) {
+      res.send = send;
+      res.send( '<html><head><title>Date monkey quiz tester in nodejs</title><link rel="stylesheet" type="text/css" media="screen and (max-device-width: 480px)" href="/mobile.css" /></head><body>' + foo + '<footer><a href="/">Date monkey quiz tester</a> in nodejs <p>&copy; <a href="http://www.clarkeology.com">Paul Clarke</a>. Hosted by <a href="http://nodester.com">nodester.com</a>.</p></footer></body></html>' );
+    }
   }
   next();
 };
@@ -96,6 +98,10 @@ var index = function ( ) {
 
 app.get( '/', function( req, res, next ) {
   res.send( index( ));
+} );
+
+app.all( '/mobile.css', function( req, res ) {
+  res.send( 'body { font-face: 2em; }' );
 } );
 
 app.all( '/category/:category', function( req, res ) {
