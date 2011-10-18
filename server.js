@@ -102,12 +102,13 @@ app.all( '/category/:category', function( req, res ) {
   res.send( question( req, res ));
 } );
 
-app.all( 'random', function( req, res ) {
+app.all( '/random', function( req, res ) {
   res.send( question( req, res ));
 } );
 
 app.listen( 12248 );
 
+// All the data in a big array, individual answers should be [ "Answer", year, "optional trivia (unused so far)" ]
 var data = [
   [
     'Best picture',
