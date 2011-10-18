@@ -101,7 +101,7 @@ app.get( '/', function( req, res, next ) {
 } );
 
 app.all( '/mobile.css', function( req, res ) {
-  res.send( 'body { font-face: 2em; }' );
+  res.send( 'body { font-size: 2em; }' );
 } );
 
 app.all( '/category/:category', function( req, res ) {
