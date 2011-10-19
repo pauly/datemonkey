@@ -7,7 +7,11 @@ html
     meta(name='viewport', content='width=device-width, target-densitydpi=160dpi, initial-scale=1')
     link(rel='stylesheet', href='/stylesheets/style.css')
     link(rel='stylesheet', media='screen and (min-device-width: 480px)', href='/stylesheets/480.css')
+    script(src='http://code.jquery.com/jquery-1.5.min.js')
+    script(src='/socket.io/socket.io.js')
+    script(src='/javascripts/main.js')
   body!= body
+  div.messages
   #footer
     p
       a(href='/') #{siteTitle} 

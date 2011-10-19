@@ -7,7 +7,16 @@
 
 var title = 'Date monkey',
   express = require('express'),
-  app = module.exports = express.createServer();
+  app = module.exports = express.createServer(),
+  io = require('socket.io'),
+  io = io.listen(app);
+
+io.sockets.on( 'connection', function ( socket ) {
+  console.log( 'got a connection' );
+  socket.on( 'answer', function ( data ) {
+    console.log( 'got an answer: ' + JSON.stringify( data ));
+  } );
+} );
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -33,11 +42,7 @@ var shuffle = function ( a ) {
 
 var multipleChoices = 3;
 
-// Generate a multiple choice input for a question, in a category
-var input = function ( c, q ) {
-  return multipleAnswersOneCategory( c, q );
-};
-
+// Is answer b like answer a (but not equal to)? Is it within range c?
 var like = function ( a, b, c ) {
   if ( a[0] != b[0] ) {
     if ( c ) {
@@ -52,6 +57,11 @@ var like = function ( a, b, c ) {
     }
     return true;
   }
+};
+
+// Generate a multiple choice input for a question, in a category
+var input = function ( c, q ) {
+  return multipleAnswersOneCategory( c, q );
 };
 
 // Generate a multiple choice input for a question, in a category
@@ -91,6 +101,9 @@ var question = function ( req, res ) {
     }
     req.query.taken = 1 + parseInt( req.query.taken );
     r += '<b>' + req.query.correct + ' / ' + req.query.taken + '</b> ';
+    console.log( 'got an answer so emitting' );
+    io.sockets.emit( 'answer', { message: 'Someone now has ' + req.query.correct + ' / ' + req.query.taken } );
+    console.log( 'emitted' );
   }
   var c = req.params.category - 1;
   var q = req.params.question - 1;
