@@ -91,7 +91,7 @@ var question = function ( req, res ) {
       name: req.query.name || '',
       c: c,
       q: q,
-      taken: 1 + parseInt( req.query.taken )
+      taken: req.query.taken ? 1 + parseInt( req.query.taken ) : 0
     },
     category: {
       title: data[c][0],
@@ -106,7 +106,7 @@ var question = function ( req, res ) {
   };
   console.log( r );
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
-    r.hidden.correct = parseInt( req.query.correct );
+    r.hidden.correct = parseInt( req.query.correct || 0 );
     if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
       r.result = 'Right!';
       ++ r.hidden.correct;
