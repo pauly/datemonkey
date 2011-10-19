@@ -12,7 +12,6 @@ var title = 'Date monkey',
   io = io.listen(app);
 
 io.sockets.on( 'connection', function ( socket ) {
-  console.log( 'got a connection' );
   socket.on( 'answer', function ( data ) {
     console.log( 'got an answer: ' + JSON.stringify( data ));
   } );
@@ -28,12 +27,8 @@ app.configure(function(){
   app.use(express.static(__dirname + '/public'));
 });
 
-app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-});
-
-app.configure('production', function(){
-  app.use(express.errorHandler());
+app.configure( 'production', function( ) {
+  app.use( express.errorHandler( ));
 });
 
 var shuffle = function ( a ) {
@@ -200,8 +195,46 @@ var data = [
     'Best actor',
     [
       [ "Colin Firth", 2010 ],
-      [  "Jeff Bridges", 2009 ],
-      [  "Sean Penn", 2008 ]
+      [ "Jeff Bridges", 2009 ],
+      [ "Sean Penn", 2008 ]
+      [ 'Daniel Day-Lewis', 2007, '(There Will Be Blood)' ],
+      [ 'Forrest Whitaker', 2006, '(Last King of Sctoland)' ],
+      [ 'Phillip Seymour-Hoffman', 2005, '(Capote)' ],
+      [ 'Jamie Foxx', 2004, '(Ray)' ],
+      [ 'Sean Penn', 2003, '(Mystic River)' ],
+      [ 'Adrian Brody', 2002, '(The Pianist)' ],
+      [ 'Denzel Washington', 2001, '(Training Day)' ],
+      [ 'Russell Crowe', 2000, '(Gladiator)' ],
+      [ 'Kevin Spacey', 1999, '(American Beauty)' ],
+      [ 'Roberto Benigni', 1998, '(Life is Beautiful)' ],
+      [ 'Jack Nicholson', 1997, '(As Good as it Gets)' ],
+      [ 'Geoffrey Rush', 1996, '(Shine)' ],
+      [ 'Nicholas Cage', 1995, '(Leaving Las Vegas)' ],
+      [ 'Tom Hanks', 1994, '(Forrest Gump)' ],
+      [ 'Tom Hanks', 1993, '(Philadelphia)' ],
+      [ 'Al Pacino', 1992, '(Scent of a Woman)' ],
+      [ 'Anthony Hopkins', 1991, '(Silence of the Lambs)' ],
+      [ 'Jeremy Irons', 1990, '(Reversal of Fortune)' ],
+      [ 'Daniel Day Lewis', 1989, '(My Left Foot)' ],
+      [ 'Dustin Hoffman', 1988, '(Rain Man)' ],
+      [ 'Michael Douglas', 1987, '(Wall Street)' ],
+      [ 'Paul Newman', 1986, '(The Colour of Money)' ],
+      [ 'John Hurt', 1985, '(Kiss of the Spider Woman)' ],
+      [ 'F. Murray Abraham', 1984, '(Amadeus)' ],
+      [ 'Robert Duvall', 1983, '(Tender Mercies)' ],
+      [ 'Ben Kingsley', 1982, '(Ghandi)' ],
+      [ 'Henry Fonda', 1981, '(On Golden Pond)' ],
+      [ 'Robert Di Nero', 1980, '(Raging Bull)' ],
+      [ 'Dustin Hoffman', 1979, '(Kramer Vs Kramer)' ],
+      [ 'Jon Voight', 1978, '(Coming Home)' ],
+      [ 'Richard Dreyfuss', 1977, '(The Goodbye Girl)' ],
+      [ 'Peter Finch', 1976, '(Network)' ],
+      [ 'Jack Nicholson', 1975, "(One Flew Over the Cuckoo's Nest)" ],
+      [ 'Art Cartney', 1974, '(Harry and Tonto)' ],
+      [ 'Jack Lemmon', 1973, '(Save the Tiger)' ],
+      [ 'Marlon Brando', 1972, '(The Godfather, declined)' ],
+      [ 'Gene Hackman', 1971, '(The French Connection)' ],
+      [ 'George C Scott', 1970, '(Patton, declined)' ]
     ],
     'Need to add more actors here I know, coming soon...'
   ],
@@ -298,7 +331,7 @@ var data = [
       [ "Ballykelly", "BOL" ],
       [ "London Biggin Hill", "BQH" ],
       [ "Barra", "BRR" ],
-      [ "Barra (the famous tidal beach landing)", "BRR" ],
+      [ "Barra", "BRR", '(the famous tidal beach landing)' ],
       [ "Bristol International", "BRS" ],
       [ "Barrow Walney Island", "BWF" ],
       [ "Bantry Aerodrome", "BYT" ],
@@ -307,7 +340,7 @@ var data = [
       [ "Carlisle", "CAX" ],
       [ "Cambrigde", "CBG" ],
       [ "Hawarden", "CEG" ],
-      [ "Donegal (Carrickfin)", "CFN" ],
+      [ "Donegal", "CFN", "(Carrickfin)" ],
       [ "Reeroe", "CHE" ],
       [ "Castlebar", "CLB" ],
       [ "Coll", "COL" ],

@@ -9,7 +9,14 @@ html
     link(rel='stylesheet', media='screen and (min-device-width: 480px)', href='/stylesheets/480.css')
     script(src='http://code.jquery.com/jquery-1.5.min.js')
     script(src='/socket.io/socket.io.js')
-    script(src='/javascripts/main.js')
+    script
+      $( function () {
+        var socket = io.connect( 'http://' + location.host, { rememberTransport: false } );
+        socket.on( 'answer', function ( data ) {
+          window.console && console.log( 'Got an answer: ' + JSON.stringify( data ));
+          $('.messages').append( '<p>' + JSON.stringify( data ) + '</p>' );
+        } );
+      } );
   body!= body
   div.messages
   #footer
