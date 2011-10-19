@@ -39,6 +39,8 @@ var multipleChoices = 3;
 
 // Is answer b like answer a (but not equal to)? Is it within range c?
 var like = function ( a, b, c ) {
+  console.log( a );
+  console.log( b );
   if ( a[0] != b[0] ) {
     if ( c ) {
       if (( typeof( a[1] ) == 'number' ) && ( typeof( b[1] ) == 'number' )) {
@@ -55,16 +57,11 @@ var like = function ( a, b, c ) {
 };
 
 // Generate a multiple choice input for a question, in a category
-var input = function ( c, q ) {
-  return multipleAnswersOneCategory( c, q );
-};
-
-// Generate a multiple choice input for a question, in a category
-var multipleAnswersOneCategory = function ( c, q ) {
-  var r = '';
+var options = function ( c, q ) {
   var all = shuffle( data[c][1].slice( 0 ));
   var answers = [ data[c][1][q] ];
   for ( i in all ) { // try and get multiple choices within 3 years
+    console.log( 'comparing ' + i + ', and ' + q );
     if ( like( all[i], data[c][1][q], 3 ) && ( answers.length < multipleChoices )) {
       answers.push( all[i] );
     }
@@ -76,30 +73,11 @@ var multipleAnswersOneCategory = function ( c, q ) {
       }
     }
   }
-  // console.log( answers );
-  for ( i in shuffle( answers )) {
-    r += '<button name="answer" type="submit" value="' + answers[i][0] + '"><span>' + answers[i][0] + '</span></button> ';
-  }
-  return r;
+  return shuffle( answers );
 };
 
 // Show a new question, and the answer to the last question
 var question = function ( req, res ) {
-  var r = '';
-  if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
-    if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
-      req.query.correct = 1 + parseInt( req.query.correct );
-      r += 'Right! ';
-    }
-    else {
-      r += 'Wrong! It was ' + data[req.query.c][1][req.query.q][0] + ' ';
-    }
-    req.query.taken = 1 + parseInt( req.query.taken );
-    r += '<b>' + req.query.correct + ' / ' + req.query.taken + '</b> ';
-    console.log( 'got an answer so emitting' );
-    io.sockets.emit( 'answer', { message: 'Someone now has ' + req.query.correct + ' / ' + req.query.taken } );
-    console.log( 'emitted' );
-  }
   var c = req.params.category - 1;
   var q = req.params.question - 1;
   if ( ! data[c] ) {
@@ -108,10 +86,37 @@ var question = function ( req, res ) {
   if ( ! data[c][1][q] ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
-  r += '<form><input type="hidden" name="taken" value="' + ( req.query.taken || 0 ) + '" /><input type="hidden" name="correct" value="' + ( req.query.correct ||  0 ) + '" /><input type="hidden" name="c" value="' + c + '" /><input type="hidden" name="q" value="' + q + '" />';
-  r += data[c][0] + ' ' + data[c][1][q][1] + '? ' + input( c, q );
-  r += '</form>';
-  r += '<p>' + data[c][2] + '</p>';
+  var r = {
+    hidden: {
+      name: req.query.name || '',
+      c: c,
+      q: q,
+      taken: 1 + parseInt( req.query.taken )
+    },
+    category: {
+      title: data[c][0],
+      explanation: data[c][2]
+    },
+    question: {
+      answer: data[c][1][q][0],
+      year: data[c][1][q][1],
+      trivia: data[c][1][q][2],
+      options: options( c, q )
+    }
+  };
+  console.log( r );
+  if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
+    r.hidden.correct = parseInt( req.query.correct );
+    if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
+      r.result = 'Right!';
+      ++ r.hidden.correct;
+    }
+    else {
+      r.result = 'Wrong! It was ' + data[req.query.c][1][req.query.q][0];
+    }
+    r.score = r.hidden.correct + ' / ' + r.hidden.taken;
+    io.sockets.emit( 'answer', { message: r.hidden.name + ' now has ' + r.score } );
+  }
   return r;
 };
 
@@ -196,7 +201,7 @@ var data = [
     [
       [ "Colin Firth", 2010 ],
       [ "Jeff Bridges", 2009 ],
-      [ "Sean Penn", 2008 ]
+      [ "Sean Penn", 2008 ],
       [ 'Daniel Day-Lewis', 2007, '(There Will Be Blood)' ],
       [ 'Forrest Whitaker', 2006, '(Last King of Sctoland)' ],
       [ 'Phillip Seymour-Hoffman', 2005, '(Capote)' ],

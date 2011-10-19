@@ -1,1 +1,15 @@
-div#content !{content}
+div#content
+  form
+    - if ( ! content.hidden.name )
+      label What is your name?
+        input(name='name', value='Anon')
+    p #{content.result} 
+      b #{content.score}
+    p #{content.category.title } #{content.question.year}?
+    each val, key in content.hidden
+      input(type='hidden', name=key, value=val)
+    each option in content.question.options
+      button(name='answer', type='submit', value=option[0])
+        span #{option[0]} 
+
+    p #{content.category.explanation}
