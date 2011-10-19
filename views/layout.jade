@@ -13,8 +13,7 @@ html
       $( function () {
         var socket = io.connect( 'http://' + location.host, { rememberTransport: false } );
         socket.on( 'answer', function ( data ) {
-          window.console && console.log( 'Got an answer: ' + JSON.stringify( data ));
-          $('.messages').append( '<p>' + JSON.stringify( data ) + '</p>' );
+          $('.messages').prepend( '<p>' + data.message + '</p>' ).find('p:nth-child(4)').fadeOut();
         } );
       } );
   body!= body
