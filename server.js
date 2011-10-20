@@ -39,8 +39,6 @@ var multipleChoices = 3;
 
 // Is answer b like answer a (but not equal to)? Is it within range c?
 var like = function ( a, b, c ) {
-  console.log( a );
-  console.log( b );
   if ( a[0] != b[0] ) {
     if ( c ) {
       if (( typeof( a[1] ) == 'number' ) && ( typeof( b[1] ) == 'number' )) {
@@ -61,7 +59,6 @@ var options = function ( c, q ) {
   var all = shuffle( data[c][1].slice( 0 ));
   var answers = [ data[c][1][q] ];
   for ( i in all ) { // try and get multiple choices within 3 years
-    console.log( 'comparing ' + i + ', and ' + q );
     if ( like( all[i], data[c][1][q], 3 ) && ( answers.length < multipleChoices )) {
       answers.push( all[i] );
     }
@@ -78,6 +75,7 @@ var options = function ( c, q ) {
 
 // Show a new question, and the answer to the last question
 var question = function ( req, res ) {
+  console.log( req.query );
   var c = req.params.category - 1;
   var q = req.params.question - 1;
   if ( ! data[c] ) {
@@ -87,33 +85,69 @@ var question = function ( req, res ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
   var r = {
+    tricksy: req.query.tricksy,
     hidden: {
       name: req.query.name || '',
       c: c,
       q: q,
-      taken: req.query.taken ? 1 + parseInt( req.query.taken ) : 0
+      taken: req.query.taken ? parseInt( req.query.taken ) : 0
     },
     category: {
       title: data[c][0],
       explanation: data[c][2]
-    },
-    question: {
-      answer: data[c][1][q][0],
-      year: data[c][1][q][1],
-      trivia: data[c][1][q][2],
-      options: options( c, q )
     }
   };
-  console.log( r );
+  var year = data[c][1][q][1];
+  if ( req.query.tricksy && ( typeof( year ) == 'number' )) {
+    var other_categories = [];
+    var i;
+    for ( i in data ) {
+      // console.log( data[i][0] + ', typeof ' + data[i][1][0][1] + ' is ' + typeof( data[i][1][0][1] ));
+      if (( i != c ) && data[i][1] && data[i][1][0][1] && ( typeof( data[i][1][0][1] ) === typeof( year ))) {
+        other_categories.push( i );
+      }
+    }
+    var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
+    if ( other_category[1] ) {
+      var other_answers = shuffle( other_category[1].slice( 0 ));
+      var some_answer;
+      for ( i in other_answers ) {
+        if ( other_answers[i][1] === year ) {
+          some_answer = other_answers[i][0];
+        }
+      }
+      if ( some_answer ) {
+        r.question = {
+          answer: data[c][1][q][0],
+          question: 'in the year ' + some_answer + ' was ' + other_category[0],
+          trivia: data[c][1][q][2],
+          options: options( c, q )
+        };
+      }
+    }
+  }
+  if ( ! r.question ) {
+    r.question = {
+      answer: data[c][1][q][0],
+      question: year, // question here is a year
+      trivia: data[c][1][q][2],
+      options: options( c, q )
+    };
+  }
+  console.log( req.query );
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
     r.hidden.correct = parseInt( req.query.correct || 0 );
     if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
       r.result = 'Right!';
+      if ( req.query.tricksy ) {
+        r.result += ' (' + data[req.query.c][1][req.query.q][1] + ')';
+      }
       ++ r.hidden.correct;
     }
     else {
-      r.result = 'Wrong! It was ' + data[req.query.c][1][req.query.q][0];
+      r.result = 'Wrong! ' + data[req.query.c][1][req.query.q][1] + ' was ' + data[req.query.c][1][req.query.q][0];
     }
+    ++ r.hidden.taken;
     r.score = r.hidden.correct + ' / ' + r.hidden.taken;
     io.sockets.emit( 'answer', { message: r.hidden.name + ' now has ' + r.score } );
   }
@@ -145,7 +179,7 @@ app.all( '/random', function( req, res ) {
 } );
 
 app.listen( 12248 );
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
 
 // All the data in a big array, individual answers should be [ "Answer", year, "optional trivia (unused so far)" ]
 var data = [
@@ -199,9 +233,9 @@ var data = [
   [
     'Best actor',
     [
-      [ "Colin Firth", 2010 ],
-      [ "Jeff Bridges", 2009 ],
-      [ "Sean Penn", 2008 ],
+      [ "Colin Firth", 2010, "King's Speech" ],
+      [ "Jeff Bridges", 2009, "Crazy Heart" ],
+      [ "Sean Penn", 2008, "Milk" ],
       [ 'Daniel Day-Lewis', 2007, '(There Will Be Blood)' ],
       [ 'Forrest Whitaker', 2006, '(Last King of Sctoland)' ],
       [ 'Phillip Seymour-Hoffman', 2005, '(Capote)' ],
@@ -246,9 +280,47 @@ var data = [
   [
     'Best actress',
     [
-      [ "Natalie Portman", 2010 ],
-      [ "Sandra Bullock", 2009 ],
-      [ "Kate Winslet", 2008 ]
+      [ "Natalie Portman", 2010, "Black Swan" ],
+      [ "Sandra Bullock", 2009, "The Blind Side" ],
+      [ "Kate Winslet", 2008, "The Reader" ],
+      [ "Marion Cotillard", 2007, "La Vie en Rose" ],
+      [ "Helen Mirren", 2006, "The Queen" ],
+      [ "Reese Witherspoon", 2005, "Walk the Line" ],
+      [ "Hilary Swank", 2004, "Million Dollar Baby" ],
+      [ "Charlize Theron", 2003, "Monster" ],
+      [ "Nicole Kidman", 2002, "The Hours" ],
+      [ "Halle Berry", 2001, "Monster's Ball" ],
+      [ "Julia Roberts", 2000, "Erin Brockavitch" ],
+      [ "Hilary Swank", 1999, "Boys Don't Cry" ],
+      [ "Gwyneth Paltrow", 1998, "Shakespeare in Love" ],
+      [ "Helen Hunt", 1997, "As Good as it Gets" ],
+      [ "Frances McDormand", 1996, "Fargo" ],
+      [ "Susan Sarandon", 1995, "Dead Man Walking" ],
+      [ "Jessica Lange", 1994, "Blue Sky" ],
+      [ "Holly Hunter", 1993, "The Piano" ],
+      [ "Emma Thompson", 1992, "Howard's End" ],
+      [ "Jodie Foster", 1991, "Silence of the Lambs" ],
+      [ "Kathy Bates", 1990, "Misery" ],
+      [ "Jessica Tandy", 1989, "Driving Miss Daisy" ],
+      [ "Jodie Foster", 1988, "The Accused" ],
+      [ "Cher", 1987, "Moonstruck" ],
+      [ "Marlee Matlin", 1986, "Children of a Lesser God" ],
+      [ "Geraldine Page", 1985, "Trip to Bountiful" ],
+      [ "Sally Field", 1984, "Places in the Heart" ],
+      [ "Shirley Maclaine", 1983, "Terms of Endearment" ],
+      [ "Meryl Streep", 1982, "Sophie's Choice" ],
+      [ "Katherine Hepburn", 1981, "On Golden Pond" ],
+      [ "Cissy Spacek", 1980, "Coal Miner's Daughter" ],
+      [ "Sally Field", 1979, "Norma Rae" ],
+      [ "Jane Fonda", 1978, "Coming Home" ],
+      [ "Diane Keaton", 1977, "Annie Hall" ],
+      [ "Faye Dunaway", 1976, "Network" ],
+      [ "Louise Fletcher", 1975, "One Flew Over the Cuckoo's Nest" ],
+      [ "Ellen Burstyn", 1974, "Alice Doesn't Live Here Anymore" ],
+      [ "Glenda Jackson", 1973, "A Touch of Class" ],
+      [ "Liza Minelli", 1972, "Caberet" ],
+      [ "Jane Fonda ", 1971, "Klute" ],
+      [ "Glenda Jackson", 1970, "Women in Love" ]
     ],
     'Need to add more actresses here I know, coming soon...'
   ],

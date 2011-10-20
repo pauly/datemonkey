@@ -5,11 +5,18 @@ div#content
         input(name='name', value='Anon')
     p #{content.result} 
       b #{content.score}
-    p #{content.category.title } #{content.question.year}?
+
+    p #{content.category.title} #{content.question.question}?
     each val, key in content.hidden
-      input(type='hidden', name=key, value=val)
+      - if ( val )
+        input(type='hidden', name=key, value=val)
     each option in content.question.options
       button(name='answer', type='submit', value=option[0])
         span #{option[0]} 
+
+    p
+      label
+        input(type='checkbox', name='tricksy', checked=content.tricksy)
+        span make it tricksy next time
 
     p #{content.category.explanation}
