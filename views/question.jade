@@ -8,7 +8,7 @@ div#content
 
     p #{content.category.title} #{content.question.question}?
     each val, key in content.hidden
-      - if ( val )
+      - if ( val !== '' )
         input(type='hidden', name=key, value=val)
     each option in content.question.options
       button(name='answer', type='submit', value=option[0])
