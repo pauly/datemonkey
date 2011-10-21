@@ -7,6 +7,7 @@ html
     meta(name='viewport', content='width=device-width, target-densitydpi=160dpi, initial-scale=1')
     link(rel='stylesheet', href='/stylesheets/style.css')
     link(rel='stylesheet', media='screen and (min-device-width: 480px)', href='/stylesheets/480.css')
+    link(rel='stylesheet', media='screen and (min-device-width: 1920px)', href='/stylesheets/1920.css')
     script(src='http://code.jquery.com/jquery-1.5.min.js')
     script(src='/socket.io/socket.io.js')
     script
@@ -15,8 +16,14 @@ html
         socket.on( 'answer', function ( data ) {
           $('.messages').prepend( '<p>' + data.message + '</p>' ).find('p:nth-child(4)').fadeOut();
         } );
+        $('body').bind( 'keyup keydown click keypress', function ( event ) {
+          window.console && console.log( event );
+          $('.debug').html( JSON.stringify( event.originalEvent ));
+
+        } );
       } );
   body!= body
+  pre.debug
   div.messages
   #footer
     p

@@ -75,7 +75,6 @@ var options = function ( c, q ) {
 
 // Show a new question, and the answer to the last question
 var question = function ( req, res ) {
-  console.log( req.query );
   var c = req.params.category - 1;
   var q = req.params.question - 1;
   if ( ! data[c] ) {
@@ -134,7 +133,6 @@ var question = function ( req, res ) {
       options: options( c, q )
     };
   }
-  console.log( req.query );
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
     r.hidden.correct = parseInt( req.query.correct || 0 );
     if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
@@ -441,7 +439,6 @@ var data = [
       [ "RAF Fairford", "FFD" ],
       [ "Fair Isle (Shetland)", "FIE" ],
       [ "Flotta Isle", "FLH" ],
-      [ "Foula", "FOA" ],
       [ "Foula (Shetland)", "FOU" ],
       [ "Fairoaks", "FRK" ],
       [ "RAF Kinloss", "FSS" ],
