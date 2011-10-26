@@ -65,6 +65,13 @@ var options = function ( c, q ) {
   }
   if ( answers.length < multipleChoices ) { // let's have another go
     for ( i in all ) {
+      if ( like( all[i], data[c][1][q], 1 ) && ( answers.length < multipleChoices )) {
+        answers.push( all[i] );
+      }
+    }
+  }
+  if ( answers.length < multipleChoices ) { // let's have another go
+    for ( i in all ) {
       if ( like( all[i], data[c][1][q] ) && ( answers.length < multipleChoices )) {
         answers.push( all[i] );
       }
@@ -84,7 +91,7 @@ var question = function ( req, res ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
   var r = {
-    tricksy: req.query.tricksy,
+    difficulty: req.query.difficulty,
     hidden: {
       name: req.query.name || '',
       c: c,
@@ -94,34 +101,44 @@ var question = function ( req, res ) {
     category: {
       title: data[c][0],
       explanation: data[c][2]
-    }
+    },
+    clues: []
   };
   var year = data[c][1][q][1];
-  if ( req.query.tricksy && ( typeof( year ) == 'number' )) {
+  if ( req.query.difficulty && ( typeof( year ) == 'number' )) {
     var other_categories = [];
-    var i;
+    var i, oq;
     for ( i in data ) {
       // console.log( data[i][0] + ', typeof ' + data[i][1][0][1] + ' is ' + typeof( data[i][1][0][1] ));
       if (( i != c ) && data[i][1] && data[i][1][0][1] && ( typeof( data[i][1][0][1] ) === typeof( year ))) {
         other_categories.push( i );
-      }
-    }
-    var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
-    if ( other_category[1] ) {
-      var other_answers = shuffle( other_category[1].slice( 0 ));
-      var some_answer;
-      for ( i in other_answers ) {
-        if ( other_answers[i][1] === year ) {
-          some_answer = other_answers[i][0];
+        if ( req.query.difficulty < 0 ) {
+          for ( oq in data[i][1] ) {
+            if ( data[i][1][oq][1] === year ) {
+              r.clues.push( data[i][1][oq] );
+            }
+          }
         }
       }
-      if ( some_answer ) {
-        r.question = {
-          answer: data[c][1][q][0],
-          question: 'in the year ' + some_answer + ' was ' + other_category[0],
-          trivia: data[c][1][q][2],
-          options: options( c, q )
-        };
+    }
+    if ( req.query.difficulty > 0 ) {
+      var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
+      if ( other_category[1] ) {
+        var other_answers = shuffle( other_category[1].slice( 0 ));
+        var some_answer;
+        for ( i in other_answers ) {
+          if ( other_answers[i][1] === year ) {
+            some_answer = other_answers[i][0];
+          }
+        }
+        if ( some_answer ) {
+          r.question = {
+            answer: data[c][1][q][0],
+            question: 'in the year ' + some_answer + ' was ' + other_category[0],
+            trivia: data[c][1][q][2],
+            options: options( c, q )
+          };
+        }
       }
     }
   }
@@ -137,7 +154,7 @@ var question = function ( req, res ) {
     r.hidden.correct = parseInt( req.query.correct || 0 );
     if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
       r.result = 'Right!';
-      if ( req.query.tricksy ) {
+      if ( req.query.difficulty ) {
         r.result += ' (' + data[req.query.c][1][req.query.q][1] + ')';
       }
       ++ r.hidden.correct;
@@ -538,6 +555,170 @@ var data = [
       [ "RNAS Yeovilton", "YEO" ]
     ],
     "OK, not dates this one but something that does come up in the quiz that we do..."
+  ],
+  [
+    "Periodic table",
+    [
+      [ "Hydrogen", "H", "Atomic number 1"],
+      [ "Helium", "He", "Atomic number 2"],
+      [ "Lithium", "Li", "Atomic number 3"],
+      [ "Beryllium", "Be", "Atomic number 4"],
+      [ "Boron", "B", "Atomic number 5"],
+      [ "Carbon", "C", "Atomic number 6"],
+      [ "Nitrogen", "N", "Atomic number 7"],
+      [ "Oxygen", "O", "Atomic number 8"],
+      [ "Fluorine", "F", "Atomic number 9"],
+      [ "Neon", "Ne", "Atomic number 10"],
+      [ "Sodium", "Na", "Atomic number 11"],
+      [ "Magnesium", "Mg", "Atomic number 12"],
+      [ "Aluminium", "Al", "Atomic number 13"],
+      [ "Silicon", "Si", "Atomic number 14"],
+      [ "Phosphorus", "P", "Atomic number 15"],
+      [ "Sulfur", "S", "Atomic number 16"],
+      [ "Chlorine", "Cl", "Atomic number 17"],
+      [ "Argon", "Ar", "Atomic number 18"],
+      [ "Potassium", "K", "Atomic number 19"],
+      [ "Calcium", "Ca", "Atomic number 20"],
+      [ "Scandium", "Sc", "Atomic number 21"],
+      [ "Titanium", "Ti", "Atomic number 22"],
+      [ "Vanadium", "V", "Atomic number 23"],
+      [ "Chromium", "Cr", "Atomic number 24"],
+      [ "Manganese", "Mn", "Atomic number 25"],
+      [ "Iron", "Fe", "Atomic number 26"],
+      [ "Cobalt", "Co", "Atomic number 27"],
+      [ "Nickel", "Ni", "Atomic number 28"],
+      [ "Copper", "Cu", "Atomic number 29"],
+      [ "Zinc", "Zn", "Atomic number 30"],
+      [ "Gallium", "Ga", "Atomic number 31"],
+      [ "Germanium", "Ge", "Atomic number 32"],
+      [ "Arsenic", "As", "Atomic number 33"],
+      [ "Selenium", "Se", "Atomic number 34"],
+      [ "Bromine", "Br", "Atomic number 35"],
+      [ "Krypton", "Kr", "Atomic number 36"],
+      [ "Rubidium", "Rb", "Atomic number 37"],
+      [ "Strontium", "Sr", "Atomic number 38"],
+      [ "Yttrium", "Y", "Atomic number 39"],
+      [ "Zirconium", "Zr", "Atomic number 40"],
+      [ "Niobium", "Nb", "Atomic number 41"],
+      [ "Molybdenum", "Mo", "Atomic number 42"],
+      [ "Technetium", "Tc", "Atomic number 43"],
+      [ "Ruthenium", "Ru", "Atomic number 44"],
+      [ "Rhodium", "Rh", "Atomic number 45"],
+      [ "Palladium", "Pd", "Atomic number 46"],
+      [ "Silver", "Ag", "Atomic number 47"],
+      [ "Cadmium", "Cd", "Atomic number 48"],
+      [ "Indium", "In", "Atomic number 49"],
+      [ "Tin", "Sn", "Atomic number 50"],
+      [ "Antimony", "Sb", "Atomic number 51"],
+      [ "Tellurium", "Te", "Atomic number 52"],
+      [ "Iodine", "I", "Atomic number 53"],
+      [ "Xenon", "Xe", "Atomic number 54"],
+      [ "Caesium", "Cs", "Atomic number 55"],
+      [ "Barium", "Ba", "Atomic number 56"],
+      [ "Lanthanum", "La", "Atomic number 57"],
+      [ "Cerium", "Ce", "Atomic number 58"],
+      [ "Praseodymium", "Pr", "Atomic number 59"],
+      [ "Neodymium", "Nd", "Atomic number 60"],
+      [ "Promethium", "Pm", "Atomic number 61"],
+      [ "Samarium", "Sm", "Atomic number 62"],
+      [ "Europium", "Eu", "Atomic number 63"],
+      [ "Gadolinium", "Gd", "Atomic number 64"],
+      [ "Terbium", "Tb", "Atomic number 65"],
+      [ "Dysprosium", "Dy", "Atomic number 66"],
+      [ "Holmium", "Ho", "Atomic number 67"],
+      [ "Erbium", "Er", "Atomic number 68"],
+      [ "Thulium", "Tm", "Atomic number 69"],
+      [ "Ytterbium", "Yb", "Atomic number 70"],
+      [ "Lutetium", "Lu", "Atomic number 71"],
+      [ "Hafnium", "Hf", "Atomic number 72"],
+      [ "Tantalum", "Ta", "Atomic number 73"],
+      [ "Tungsten", "W", "Atomic number 74"],
+      [ "Rhenium", "Re", "Atomic number 75"],
+      [ "Osmium", "Os", "Atomic number 76"],
+      [ "Iridium", "Ir", "Atomic number 77"],
+      [ "Platinum", "Pt", "Atomic number 78"],
+      [ "Gold", "Au", "Atomic number 79"],
+      [ "Mercury", "Hg", "Atomic number 80"],
+      [ "Thallium", "Tl", "Atomic number 81"],
+      [ "Lead", "Pb", "Atomic number 82"],
+      [ "Bismuth", "Bi", "Atomic number 83"],
+      [ "Polonium", "Po", "Atomic number 84"],
+      [ "Astatine", "At", "Atomic number 85"],
+      [ "Radon", "Rn", "Atomic number 86"],
+      [ "Francium", "Fr", "Atomic number 87"],
+      [ "Radium", "Ra", "Atomic number 88"],
+      [ "Actinium", "Ac", "Atomic number 89"],
+      [ "Thorium", "Th", "Atomic number 90"],
+      [ "Protactinium", "Pa", "Atomic number 91"],
+      [ "Uranium", "U", "Atomic number 92"],
+      [ "Neptunium", "Np", "Atomic number 93"],
+      [ "Plutonium", "Pu", "Atomic number 94"],
+      [ "Americium", "Am", "Atomic number 95"],
+      [ "Curium", "Cm", "Atomic number 96"],
+      [ "Berkelium", "Bk", "Atomic number 97"],
+      [ "Californium", "Cf", "Atomic number 98"],
+      [ "Einsteinium", "Es", "Atomic number 99"],
+      [ "Fermium", "Fm", "Atomic number 100"],
+      [ "Mendelevium", "Md", "Atomic number 101"],
+      [ "Nobelium", "No", "Atomic number 102"],
+      [ "Lawrencium", "Lr", "Atomic number 103"],
+      [ "Rutherfordium", "Rf", "Atomic number 104"],
+      [ "Dubnium", "Db", "Atomic number 105"],
+      [ "Seaborgium", "Sg", "Atomic number 106"],
+      [ "Bohrium", "Bh", "Atomic number 107"],
+      [ "Hassium", "Hs", "Atomic number 108"],
+      [ "Meitnerium", "Mt", "Atomic number 109"],
+      [ "Darmstadtium", "Ds", "Atomic number 110"],
+      [ "Roentgenium", "Rg", "Atomic number 111"],
+      [ "Copernicium", "Cn", "Atomic number 112"],
+      [ "Ununtrium", "Uut", "Atomic number 113"],
+      [ "Ununquadium", "Uuq", "Atomic number 114"],
+      [ "Ununpentium", "Uup", "Atomic number 115"],
+      [ "Ununhexium", "Uuh", "Atomic number 116"],
+      [ "Ununseptium", "Uus", "Atomic number 117"],
+      [ "Ununoctium", "Uuo", "Atomic number 118"],
+    ],
+    "Again not dates, maybe I should change the name of this quiz..?"
+  ],
+  [
+    "English monarchs",
+    [
+      [ "Offa", 774, 796 ],
+      [ "Egbert", 802, 839 ],
+      [ "Aethelwulf", 839, 856 ],
+      [ "Aethelbald", 856, 860 ],
+      [ "Aethelberht", 860, 865 ],
+      [ "Aethelred", 865, 871 ],
+      [ "Alfred the Great", 871, 899 ],
+      [ "Edward the Elder", 899, 924 ],
+      [ "Aethelstan the Glorious", 924, 939 ],
+      [ "Edmund the Magnificent", 939, 946 ],
+      [ "Eadred", 946, 955 ],
+      [ "Eadwig", 955, 959 ],
+      [ "Edgar the Peaceful", 959, 975 ],
+      [ "Saint Edward the Martyr", 975, 978 ],
+      [ "Aethelred the Unready", 978, 1013 ],
+      [ "Sweyn Forkbeard", 1013, 1014 ],
+      [ "Aethelred the Ill-Advised", 1014, 1016, "Aethelred the Unready's second reign" ],
+      [ "Edmund Ironside", 1016, 1016 ],
+      [ "Cnut", 1016, 1035 ],
+      [ "Harold Harefoot", 1035, 1040 ],
+      [ "Harthacnut", 1040, 1042 ],
+      [ "Saint Edward the Confesssor", "1042-06-09", "1066-01-05" ],
+      [ "Harold Godwinson", "1066-01-06", "1066-10-14" ],
+      [ "Edgar the Aetheling", "1066-10-15", "1066-12-17", "Proclaimed but never crowned" ],
+      [ "William I", "1066-12-25", "1087-09-25" ],
+      [ "William II", "1087-09-26", "1100-08-04" ],
+      [ "Henry I", "1100-08-05", "1135-12-21" ],
+      [ "Stephen", "1135-12-22", "1154-12-18" ],
+      [ "Henry II", "1154-12-19", "1170-06-13" ],
+      // [ "Henry the Young King", "1170", "1183" ],
+      [ "Richard I", "1189-09-03", "1199-05-26", "Richard the Lion Heart" ],
+      [ "John", "1199-05-27", "1216-10-27" ],
+      [ "Henry III", "1216-10-28", "1272-11-19" ],
+      [ "Edward I", "1272-11-20", "1307-07-06" ],
+    ],
+    "From http://en.wikipedia.org/wiki/List_of_English_monarchs"
   ]
 ];
 

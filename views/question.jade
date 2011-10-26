@@ -16,7 +16,16 @@ div#content
 
     p
       label
-        input(type='checkbox', name='tricksy', checked=content.tricksy)
-        span make it tricksy next time
+        input(type='radio', name='difficulty', value=1, checked=(content.difficulty==1))
+        span make it tricksy next time 
+      label
+        input(type='radio', name='difficulty', value=-1, checked=(content.difficulty==-1))
+        span make it easy next time 
+
+    if ( content.clues )
+    p Some clues:
+      ul
+        each clue in content.clues
+          li #{clue[0]}
 
     p #{content.category.explanation}
