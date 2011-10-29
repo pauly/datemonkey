@@ -11,21 +11,24 @@ div#content
       - if ( val !== '' )
         input(type='hidden', name=key, value=val)
     each option in content.question.options
-      button(name='answer', type='submit', value=option[0])
-        span #{option[0]} 
+      button(name='answer', type='submit', value=option.answer( ))
+        span #{option.answer()} 
 
-    p
+    p Make it:
       label
         input(type='radio', name='difficulty', value=1, checked=(content.difficulty==1))
-        span make it tricksy next time 
+        | tricksy
+      label
+        input(type='radio', name='difficulty', value=0, checked=(content.difficulty==0))
+        | normal
       label
         input(type='radio', name='difficulty', value=-1, checked=(content.difficulty==-1))
-        span make it easy next time 
+        | easy
 
     if ( content.clues )
-    p Some clues:
+      p Some clues:
       ul
-        each clue in content.clues
-          li #{clue[0]}
+        each clue in content.clues()
+          li #{clue.answer()}
 
     p #{content.category.explanation}

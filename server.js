@@ -31,48 +31,83 @@ app.configure( 'production', function( ) {
   app.use( express.errorHandler( ));
 });
 
+var Question = function ( question ) {
+  if ( question._question )
+    return question; // already been done
+  this._question = question;
+  this._clues = null;
+  this.clues = function ( ) {
+    if ( this._clues !== null )
+      return this._clues;
+    this._clues = [];
+    var i, j, oq;
+    for ( i in data ) {
+      for ( j in data[i][1] ) {
+        if ( data[i][1][j].year( ) == this.year( )) {
+          this._clues.push( data[i][1][j] );
+        }
+      }
+    }
+  }
+  this.year = function () {
+    var d = this._question[1];
+    if ( new String( d ).match( /\d{3,4}/ )){
+      return d;
+    }
+    d = new Date( d );
+    return d.getFullYear ? d.getFullYear() : false;
+  };
+  this.answer = function () {
+    return this._question[0];
+  };
+  this.trivia = function () {
+    return this._question[3] || this._question[2];
+  };
+  // Is answer b like answer a (but not equal to)? Is it within range c?
+  this.like = function ( b, c ) {
+    if ( this.answer() != b.answer( )) {
+      if ( c ) {
+        // console.log( 'comparing ' + this.year() + ' with ' + b.year( ));
+        if ( this.year() && b.year( )) {
+          // console.log( this.year( ) + ' - ' + b.year( ) + ' is ' + ( this.year( ) - b.year( )) + ' is that less than ' + c );
+          return Math.abs( this.year( ) - b.year( )) <= c;
+        }
+        else {
+          // console.log( this.answer().substr(0,c) + ' == ' + b.answer().substr(0,c) + '?' );
+          return this.answer().toLowerCase().substr(0,c) == b.answer().toLowerCase().substr(0,c);
+        }
+      }
+      return true;
+    }
+  };
+};
+
 var shuffle = function ( a ) {
   return a.sort( function () { return Math.random() > 0.5 } );
 };
 
 var multipleChoices = 3;
 
-// Is answer b like answer a (but not equal to)? Is it within range c?
-var like = function ( a, b, c ) {
-  if ( a[0] != b[0] ) {
-    if ( c ) {
-      if (( typeof( a[1] ) == 'number' ) && ( typeof( b[1] ) == 'number' )) {
-        // console.log( a[1] + ' - ' + b[1] + ' is ' + ( a[1] - b[1] ) + ' is that less than ' + c );
-        return Math.abs( a[1] - b[1] ) <= c;
-      }
-      else {
-        // console.log( a[0].substr(0,c) + ' == ' + b[0].substr(0,c) + '?' );
-        return a[0].toLowerCase().substr(0,c) == b[0].toLowerCase().substr(0,c);
-      }
-    }
-    return true;
-  }
-};
-
 // Generate a multiple choice input for a question, in a category
 var options = function ( c, q ) {
+  var question = data[c][1][q];
   var all = shuffle( data[c][1].slice( 0 ));
-  var answers = [ data[c][1][q] ];
+  var answers = [ question ];
   for ( i in all ) { // try and get multiple choices within 3 years
-    if ( like( all[i], data[c][1][q], 3 ) && ( answers.length < multipleChoices )) {
+    if ( question.like( all[i], 3 ) && ( answers.length < multipleChoices )) {
       answers.push( all[i] );
     }
   }
   if ( answers.length < multipleChoices ) { // let's have another go
     for ( i in all ) {
-      if ( like( all[i], data[c][1][q], 1 ) && ( answers.length < multipleChoices )) {
+      if ( question.like( all[i], 1 ) && ( answers.length < multipleChoices )) {
         answers.push( all[i] );
       }
     }
   }
   if ( answers.length < multipleChoices ) { // let's have another go
     for ( i in all ) {
-      if ( like( all[i], data[c][1][q] ) && ( answers.length < multipleChoices )) {
+      if ( question.like( all[i] ) && ( answers.length < multipleChoices )) {
         answers.push( all[i] );
       }
     }
@@ -102,65 +137,59 @@ var question = function ( req, res ) {
       title: data[c][0],
       explanation: data[c][2]
     },
-    clues: []
+    clues: data[c][1][q].clues()
   };
-  var year = data[c][1][q][1];
-  if ( req.query.difficulty && ( typeof( year ) == 'number' )) {
+  var year = data[c][1][q].year();
+  console.log( req.query.difficulty + ' > 0 ) && ' + data[c][1][q].year( ) + '?' );
+  if (( req.query.difficulty > 0 ) && data[c][1][q].year( )) {
     var other_categories = [];
     var i, oq;
     for ( i in data ) {
-      // console.log( data[i][0] + ', typeof ' + data[i][1][0][1] + ' is ' + typeof( data[i][1][0][1] ));
-      if (( i != c ) && data[i][1] && data[i][1][0][1] && ( typeof( data[i][1][0][1] ) === typeof( year ))) {
+      if (( i != c ) && data[i][1] && data[i][1][0].year( )) {
         other_categories.push( i );
-        if ( req.query.difficulty < 0 ) {
-          for ( oq in data[i][1] ) {
-            if ( data[i][1][oq][1] === year ) {
-              r.clues.push( data[i][1][oq] );
-            }
-          }
-        }
       }
     }
-    if ( req.query.difficulty > 0 ) {
-      var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
-      if ( other_category[1] ) {
-        var other_answers = shuffle( other_category[1].slice( 0 ));
-        var some_answer;
-        for ( i in other_answers ) {
-          if ( other_answers[i][1] === year ) {
-            some_answer = other_answers[i][0];
-          }
+    console.log( other_categories );
+    var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
+    if ( other_category[1] ) {
+      var other_answers = shuffle( other_category[1].slice( 0 ));
+      var some_answer;
+      for ( i in other_answers ) {
+        if ( other_answers[i].year( ) === year ) {
+          some_answer = other_answers[i].answer( );
         }
-        if ( some_answer ) {
-          r.question = {
-            answer: data[c][1][q][0],
-            question: 'in the year ' + some_answer + ' was ' + other_category[0],
-            trivia: data[c][1][q][2],
-            options: options( c, q )
-          };
-        }
+      }
+      if ( some_answer ) {
+        r.question = {
+          answer: data[c][1][q].year( ),
+          question: 'in the year ' + some_answer + ' was ' + other_category[0],
+          trivia: data[c][1][q].trivia( ),
+          options: options( c, q )
+        };
       }
     }
   }
   if ( ! r.question ) {
     r.question = {
-      answer: data[c][1][q][0],
+      answer: data[c][1][q].year( ),
       question: year, // question here is a year
-      trivia: data[c][1][q][2],
+      trivia: data[c][1][q].trivia( ),
       options: options( c, q )
     };
   }
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
     r.hidden.correct = parseInt( req.query.correct || 0 );
-    if ( data[req.query.c][1][req.query.q][0] === req.query.answer ) {
+    console.log( 'is ' + data[req.query.c][1][req.query.q].answer( ) + ' === ' + req.query.answer );
+    console.log( data[req.query.c][1][req.query.q] );
+    if ( data[req.query.c][1][req.query.q].answer( ) === req.query.answer ) {
       r.result = 'Right!';
       if ( req.query.difficulty ) {
-        r.result += ' (' + data[req.query.c][1][req.query.q][1] + ')';
+        r.result += ' (' + data[req.query.c][1][req.query.q].year( ) + ')';
       }
       ++ r.hidden.correct;
     }
     else {
-      r.result = 'Wrong! ' + data[req.query.c][1][req.query.q][1] + ' was ' + data[req.query.c][1][req.query.q][0];
+      r.result = 'Wrong! ' + data[req.query.c][1][req.query.q].year( ) + ' was ' + data[req.query.c][1][req.query.q].answer( );
     }
     ++ r.hidden.taken;
     r.score = r.hidden.correct + ' / ' + r.hidden.taken;
@@ -706,7 +735,7 @@ var data = [
       [ "Harthacnut", 1040, 1042 ],
       [ "Saint Edward the Confesssor", "1042-06-09", "1066-01-05" ],
       [ "Harold Godwinson", "1066-01-06", "1066-10-14" ],
-      [ "Edgar the Aetheling", "1066-10-15", "1066-12-17", "Proclaimed but never crowned" ],
+      // [ "Edgar the Aetheling", "1066-10-15", "1066-12-17", "Proclaimed but never crowned" ],
       [ "William I", "1066-12-25", "1087-09-25" ],
       [ "William II", "1087-09-26", "1100-08-04" ],
       [ "Henry I", "1100-08-05", "1135-12-21" ],
@@ -716,9 +745,20 @@ var data = [
       [ "Richard I", "1189-09-03", "1199-05-26", "Richard the Lion Heart" ],
       [ "John", "1199-05-27", "1216-10-27" ],
       [ "Henry III", "1216-10-28", "1272-11-19" ],
-      [ "Edward I", "1272-11-20", "1307-07-06" ],
+      [ "Edward I", "1272-11-20", "1307-07-06", "Longshanks" ],
+      [ "Edward II", "1307-07-07", "1327-01-24" ],
+      [ "Edward III", "1327-01-25", "1377-06-20" ],
+      [ "Richard II", "1377-06-21", "1399-09-29" ],
+      [ "Henry IV", "1399-09-30", "1413-03-19" ],
+      [ "Henry V", "1413-03-20", "1422-08-30" ],
+      [ "Henry VI", "1422-08-31", "1461-03-04" ],
     ],
     "From http://en.wikipedia.org/wiki/List_of_English_monarchs"
   ]
 ];
-
+// initialise
+for ( c in data ) {
+  for ( q in data[c][1] ) {
+    data[c][1][q] = new Question( data[c][1][q] );
+  }
+}

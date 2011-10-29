@@ -16,11 +16,6 @@ html
         socket.on( 'answer', function ( data ) {
           $('.messages').prepend( '<p>' + data.message + '</p>' ).find('p:nth-child(4)').fadeOut();
         } );
-        $('body').bind( 'keyup keydown click keypress', function ( event ) {
-          window.console && console.log( event );
-          $('.debug').html( JSON.stringify( event.originalEvent ));
-
-        } );
       } );
   body!= body
   pre.debug
