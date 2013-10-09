@@ -25,4 +25,10 @@ div#content
         input(type='radio', name='difficulty', value=-1, checked=(content.difficulty==-1))
         | easy
 
+    if ( content.clues )
+      p Some clues:
+      ul
+        each clue in content.clues()
+          li #{clue.answer()}
+
     p #{content.category.explanation}
