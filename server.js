@@ -49,14 +49,14 @@ var Question = function ( question ) {
         }
       }
     }
-  }
-  this.year = function () {
+  };
+  this.year = function ( ) {
     var d = this._question[1];
-    if ( new String( d ).match( /\d{3,4}/ )){
-      return d;
-    }
+    console.log( 'in year( ), d is', d );
+    if (( '' + d ).match( /^[A-Za-z]/ )) return d; // not a date at all!
+    if (( '' + d ).match( /^\d{3,4}$/ )) return d; // already a year
     d = new Date( d );
-    return d.getFullYear ? d.getFullYear() : false;
+    return d.getFullYear ? d.getFullYear( ) : false;
   };
   this.answer = function () {
     return this._question[0];
@@ -84,7 +84,7 @@ var Question = function ( question ) {
 };
 
 var shuffle = function ( a ) {
-  return a.sort( function () { return Math.random() > 0.5 } );
+  return a.sort( function ( ) { return Math.random() > 0.5; } );
 };
 
 var multipleChoices = 3;
@@ -94,6 +94,7 @@ var options = function ( c, q ) {
   var question = data[c][1][q];
   var all = shuffle( data[c][1].slice( 0 ));
   var answers = [ question ];
+  var i;
   for ( i in all ) { // try and get multiple choices within 3 years
     if ( question.like( all[i], 3 ) && ( answers.length < multipleChoices )) {
       answers.push( all[i] );
@@ -132,7 +133,7 @@ var question = function ( req, res ) {
       name: req.query.name || '',
       c: c,
       q: q,
-      taken: req.query.taken ? parseInt( req.query.taken ) : 0
+      taken: req.query.taken ? parseInt( req.query.taken, 10 ) : 0
     },
     category: {
       title: data[c][0],
@@ -177,9 +178,10 @@ var question = function ( req, res ) {
       trivia: data[c][1][q].trivia( ),
       options: options( c, q )
     };
+    console.log( 'r.question.question is', r.question.question );
   }
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
-    r.hidden.correct = parseInt( req.query.correct || 0 );
+    r.hidden.correct = parseInt( req.query.correct || 0, 10 );
     console.log( 'is ' + data[req.query.c][1][req.query.q].answer( ) + ' === ' + req.query.answer );
     console.log( data[req.query.c][1][req.query.q] );
     if ( data[req.query.c][1][req.query.q].answer( ) === req.query.answer ) {
@@ -224,11 +226,11 @@ app.all( '/random', function( req, res ) {
 } );
 
 app.listen( 12248 );
-console.log( "Express server listening on port %d in %s mode", app.address().port, app.settings.env );
+console.log( 'Express server listening on port %d in %s mode', app.address().port, app.settings.env );
 
 // initialise
-for ( c in data ) {
-  for ( q in data[c][1] ) {
+for ( var c in data ) {
+  for ( var q in data[c][1] ) {
     data[c][1][q] = new Question( data[c][1][q] );
   }
 }
