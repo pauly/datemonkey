@@ -7,7 +7,7 @@ module.exports = [
       [ "Hurt Locker", 2009 ],
       [ "Slumdog Millionaire", 2008 ]
     ],
-    'Not much data here...'
+    'Not much data here, populate data.js with your own questions...'
   ],
   [
     'Best actor',
@@ -16,7 +16,7 @@ module.exports = [
       [ "Jeff Bridges", 2009, "Crazy Heart" ],
       [ "Sean Penn", 2008, "Milk" ]
     ],
-    'Not much data here...'
+    'Not much data here, populate data.js with your own questions...'
   ],
   [
     'Best actress',
@@ -25,6 +25,6 @@ module.exports = [
       [ "Sandra Bullock", 2009, "The Blind Side" ],
       [ "Kate Winslet", 2008, "The Reader" ]
     ],
-    'Need to add more actresses here I know, coming soon...'
+    'Need to add more actresses here I know, populate data.js with your own oscar best actress questions...'
   ]
 ];
