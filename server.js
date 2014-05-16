@@ -184,7 +184,7 @@ var question = function ( req, res ) {
       ++ r.hidden.correct;
     }
     else {
-      r.result = 'Wrong! ' + data[req.query.c][1][req.query.q].year( ) + ' was ' + data[req.query.c][1][req.query.q].answer( );
+      r.result = 'Wrong! ' + data[req.query.c][1][req.query.q].question( ) + ' was ' + data[req.query.c][1][req.query.q].answer( );
       message += 'incorrect';
     }
     ++ r.hidden.taken;
