@@ -5,12 +5,11 @@
  * @date    Mon 17 Oct 2011 18:27:10 BST
  */
 
-var title = 'Date monkey',
-  express = require('express'),
-  app = module.exports = express.createServer(),
-  io = require('socket.io'),
-  data = require('./data'),
-  io = io.listen(app);
+var title = 'Date monkey';
+var express = require( 'express' );
+var app = module.exports = express.createServer( );
+var io = require('socket.io').listen( app );
+var data = require( './data' );
 
 io.sockets.on( 'connection', function ( socket ) {
   socket.on( 'answer', function ( data ) {
@@ -18,28 +17,23 @@ io.sockets.on( 'connection', function ( socket ) {
   } );
 } );
 
-app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  // app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(require('stylus').middleware({ src: __dirname + '/public' }));
-  app.use(app.router);
-  // app.use(express.static(__dirname + '/public'));
-});
+app.configure( function ( ) {
+  app.set( 'views', __dirname + '/views' );
+  app.set( 'view engine', 'jade' );
+  app.use( require( 'stylus' ).middleware( { src: __dirname + '/public' } ));
+  app.use( app.router );
+} );
 
-app.configure( 'production', function( ) {
+app.configure( 'production', function ( ) {
   app.use( express.errorHandler( ));
-});
+} );
 
 var Question = function ( question ) {
-  if ( question._question )
-    return question; // already been done
+  if ( question && question._question ) return question; // already been done
   this._question = question;
   this._clues = null;
   this.clues = function ( ) {
-    if ( this._clues !== null )
-      return this._clues;
+    if ( this._clues !== null ) return this._clues;
     this._clues = [];
     var i, j, oq;
     for ( i in data ) {
@@ -50,33 +44,33 @@ var Question = function ( question ) {
       }
     }
   };
-  this.year = function ( ) {
-    var d = this._question[1];
-    console.log( 'in year( ), d is', d );
-    if (( '' + d ).match( /^[A-Za-z]/ )) return d; // not a date at all!
-    if (( '' + d ).match( /^\d{3,4}$/ )) return d; // already a year
-    d = new Date( d );
-    return d.getFullYear ? d.getFullYear( ) : false;
+  this.question = function ( ) {
+    return this._question[1];
   };
-  this.answer = function () {
+  this.year = function ( ) {
+    var d = this.question( );
+    if (( '' + d ).match( /^[A-Za-z]/ )) return null; // not a date at all!
+    if (( '' + d ).match( /^\d{3,4}$/ )) return d / 1; // looks like a year
+    d = new Date( d );
+    return d.getFullYear ? d.getFullYear( ) : null;
+  };
+  this.answer = function ( ) {
     return this._question[0];
   };
-  this.trivia = function () {
+  this.firstChars = function ( c ) {
+    return this.answer( ).toLowerCase( ).substr( 0, c );
+  };
+  this.trivia = function ( ) {
     return this._question[3] || this._question[2];
   };
   // Is answer b like answer a (but not equal to)? Is it within range c?
   this.like = function ( b, c ) {
-    if ( this.answer() != b.answer( )) {
+    if ( this.answer( ) != b.answer( )) {
       if ( c ) {
-        // console.log( 'comparing ' + this.year() + ' with ' + b.year( ));
-        if ( this.year() && b.year( )) {
-          // console.log( this.year( ) + ' - ' + b.year( ) + ' is ' + ( this.year( ) - b.year( )) + ' is that less than ' + c );
+        if ( this.year( ) && b.year( )) {
           return Math.abs( this.year( ) - b.year( )) <= c;
         }
-        else {
-          // console.log( this.answer().substr(0,c) + ' == ' + b.answer().substr(0,c) + '?' );
-          return this.answer().toLowerCase().substr(0,c) == b.answer().toLowerCase().substr(0,c);
-        }
+        return this.firstChars( c ) == b.firstChars( c );
       }
       return true;
     }
@@ -84,7 +78,7 @@ var Question = function ( question ) {
 };
 
 var shuffle = function ( a ) {
-  return a.sort( function ( ) { return Math.random() > 0.5; } );
+  return a.sort( function ( ) { return Math.random( ) > 0.5; } );
 };
 
 var multipleChoices = 3;
@@ -128,7 +122,7 @@ var question = function ( req, res ) {
     q = Math.floor( Math.random( ) * data[c][1].length );
   }
   var r = {
-    difficulty: req.query.difficulty,
+    difficulty: req.query.difficulty || 0,
     hidden: {
       name: req.query.name || '',
       c: c,
@@ -139,32 +133,30 @@ var question = function ( req, res ) {
       title: data[c][0],
       explanation: data[c][2]
     },
-    clues: data[c][1][q].clues()
+    clues: data[c][1][q].clues( )
   };
-  var year = data[c][1][q].year();
-  console.log( req.query.difficulty + ' > 0 ) && ' + data[c][1][q].year( ) + '?' );
+  var question = data[c][1][q].year( ) || data[c][1][q].question( );
   if (( req.query.difficulty > 0 ) && data[c][1][q].year( )) {
-    var other_categories = [];
+    var otherCategories = [];
     var i, oq;
     for ( i in data ) {
       if (( i != c ) && data[i][1] && data[i][1][0].year( )) {
-        other_categories.push( i );
+        otherCategories.push( i );
       }
     }
-    console.log( other_categories );
-    var other_category = data[ other_categories[ Math.floor( Math.random( ) * other_categories.length ) ]];
-    if ( other_category[1] ) {
-      var other_answers = shuffle( other_category[1].slice( 0 ));
-      var some_answer;
-      for ( i in other_answers ) {
-        if ( other_answers[i].year( ) === year ) {
-          some_answer = other_answers[i].answer( );
+    var otherCategory = data[ otherCategories[ Math.floor( Math.random( ) * otherCategories.length ) ]];
+    if ( otherCategory[1] ) {
+      var otherAnswers = shuffle( otherCategory[1].slice( 0 ));
+      var someAnswer;
+      for ( i in otherAnswers ) {
+        if ( otherAnswers[i].year( ) === question ) {
+          someAnswer = otherAnswers[i].answer( );
         }
       }
-      if ( some_answer ) {
+      if ( someAnswer ) {
         r.question = {
           answer: data[c][1][q].year( ),
-          question: 'in the year ' + some_answer + ' was ' + other_category[0],
+          question: 'in the year ' + someAnswer + ' was ' + otherCategory[0],
           trivia: data[c][1][q].trivia( ),
           options: options( c, q )
         };
@@ -174,16 +166,13 @@ var question = function ( req, res ) {
   if ( ! r.question ) {
     r.question = {
       answer: data[c][1][q].year( ),
-      question: year, // question here is a year
+      question: question, // question here is a year
       trivia: data[c][1][q].trivia( ),
       options: options( c, q )
     };
-    console.log( 'r.question.question is', r.question.question );
   }
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
     r.hidden.correct = parseInt( req.query.correct || 0, 10 );
-    console.log( 'is ' + data[req.query.c][1][req.query.q].answer( ) + ' === ' + req.query.answer );
-    console.log( data[req.query.c][1][req.query.q] );
     if ( data[req.query.c][1][req.query.q].answer( ) === req.query.answer ) {
       r.result = 'Right!';
       if ( req.query.difficulty ) {
@@ -201,7 +190,7 @@ var question = function ( req, res ) {
   return r;
 };
 
-app.get( '/', function( req, res, next ) {
+app.get( '/', function ( req, res, next ) {
   res.render( 'index.jade', {
     siteTitle: title,
     title: title + ' - experiments in nodejs',
@@ -209,7 +198,7 @@ app.get( '/', function( req, res, next ) {
   } );
 } );
 
-app.all( '/category/:category', function( req, res ) {
+app.all( '/category/:category', function ( req, res ) {
   res.render( 'question.jade', {
     siteTitle: title,
     title: title + ' - ' + data[ req.params.category - 1 ][0] + ' question',
@@ -217,7 +206,7 @@ app.all( '/category/:category', function( req, res ) {
   } );
 } );
 
-app.all( '/random', function( req, res ) {
+app.all( '/random', function ( req, res ) {
   res.render( 'question.jade', {
     siteTitle: title,
     title: title + ' - random question',
@@ -226,7 +215,6 @@ app.all( '/random', function( req, res ) {
 } );
 
 app.listen( process.env.PORT || 12248 );
-// console.log( 'Express server listening on port %d in %s mode', app.address().port, app.settings.env );
 
 // initialise
 for ( var c in data ) {
