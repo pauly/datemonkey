@@ -14,7 +14,7 @@ html(lang="en")
       $( function () {
         var socket = io.connect( 'http://' + location.host, { rememberTransport: false } );
         socket.on( 'answer', function ( data ) {
-          $('.messages').prepend( '<p>' + data.message + '</p>' ).find('p:nth-child(4)').fadeOut();
+          $('.messages').prepend( '<p>' + data.message + '</p>' ).find( 'p:nth-child(4)' ).fadeOut( );
         } );
       } );
   body!= body
@@ -24,4 +24,4 @@ html(lang="en")
     p
       a(href='/') #{siteTitle}
       &nbsp;&copy; 
-      a(href='http://www.clarkeology.com') Paul Clarke 
+      a(href='http://www.clarkeology.com') Paul Clarke

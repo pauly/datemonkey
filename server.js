@@ -22,6 +22,7 @@ app.configure( function ( ) {
   app.set( 'view engine', 'jade' );
   app.use( require( 'stylus' ).middleware( { src: __dirname + '/public' } ));
   app.use( app.router );
+  app.use( express.static( __dirname + '/public' ));
 } );
 
 app.configure( 'production', function ( ) {
@@ -165,27 +166,30 @@ var question = function ( req, res ) {
   }
   if ( ! r.question ) {
     r.question = {
-      answer: data[c][1][q].year( ),
+      answer: data[c][1][q].answer( ),
       question: question, // question here is a year
       trivia: data[c][1][q].trivia( ),
       options: options( c, q )
     };
   }
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
+    var message = data[req.query.c][0] + ' ' + data[req.query.c][1][req.query.q].question( ) + ' ';
     r.hidden.correct = parseInt( req.query.correct || 0, 10 );
     if ( data[req.query.c][1][req.query.q].answer( ) === req.query.answer ) {
       r.result = 'Right!';
-      if ( req.query.difficulty ) {
-        r.result += ' (' + data[req.query.c][1][req.query.q].year( ) + ')';
+      message += 'correct';
+      if ( req.query.difficulty > 0 ) {
+        r.result += ' (' + data[req.query.c][1][req.query.q].answer( ) + ')';
       }
       ++ r.hidden.correct;
     }
     else {
       r.result = 'Wrong! ' + data[req.query.c][1][req.query.q].year( ) + ' was ' + data[req.query.c][1][req.query.q].answer( );
+      message += 'incorrect';
     }
     ++ r.hidden.taken;
     r.score = r.hidden.correct + ' / ' + r.hidden.taken;
-    io.sockets.emit( 'answer', { message: r.hidden.name + ' now has ' + r.score } );
+    io.sockets.emit( 'answer', { message: r.hidden.name + ' now has ' + r.score + '; ' + message } );
   }
   return r;
 };
