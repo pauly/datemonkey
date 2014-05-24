@@ -9,16 +9,17 @@ var title = 'Date monkey';
 var password = process.env.PASSWORD || 'lkjsd';
 var crypto = require( 'crypto' );
 var express = require( 'express' );
+var pagespeed = require('pagespeed');
 var app = module.exports = express.createServer( );
 var io = require( 'socket.io' ).listen( app );
 var data = require( './data' );
 var Question = require( './lib/Question' );
 
-/* io.sockets.on( 'connection', function ( socket ) {
+io.sockets.on( 'connection', function ( socket ) {
   socket.on( 'answer', function ( data ) {
     console.log( 'got an answer: ' + JSON.stringify( data ));
   } );
-} ); */
+} );
 
 app.configure( function ( ) {
   app.set( 'views', __dirname + '/views' );
@@ -26,6 +27,7 @@ app.configure( function ( ) {
   app.use( require( 'stylus' ).middleware( { src: __dirname + '/public' } ));
   app.use( app.router );
   app.use( express.static( __dirname + '/public' ));
+  app.use( pagespeed.middleware( { debug: true } ));
 } );
 
 app.configure( 'production', function ( ) {
@@ -43,11 +45,17 @@ var options = function ( c, q ) {
   var question = data[c][1][q];
   var all = shuffle( data[c][1].slice( 0 ));
   var answers = [ question ];
-  var i;
-  for ( var diff in [ 3, 1, 100, 200, 1000 ] ) {
+  var randomWrongAnswer = question.randomWrongAnswer( );
+  if ( randomWrongAnswer ) answers.push( randomWrongAnswer );
+  var i, j;
+  var ranges = [ 3, 1, 100, 200, 0 ];
+  for ( var j in ranges ) {
+    var diff = ranges[ j ];
     if ( answers.length < multipleChoices ) { // let's have another go
       for ( i in all ) { // try and get multiple choices within 3 years
-        if ( question.like( all[i], diff ) && ( answers.length < multipleChoices )) {
+        if ( answers.length >= multipleChoices ) continue;
+        if ( ~ answers.indexOf( all[i] )) continue;
+        if ( question.like( all[i], diff )) {
           answers.push( all[i] );
         }
       }
@@ -58,8 +66,8 @@ var options = function ( c, q ) {
 
 var _hash = function ( data, source ) {
   var subset = {
-    correct: data.correct / 1,
-    taken: data.taken / 1 
+    correct: ( data.correct / 1 ) || 0,
+    taken: ( data.taken / 1 ) || 0
   };
   var hash = crypto.createHmac( 'md5', password ).update( JSON.stringify( subset )).digest( 'hex' );
   return hash;
@@ -133,13 +141,13 @@ var question = function ( req, res ) {
   if ( ! r.question ) {
     r.question = {
       answer: data[c][1][q].answer( ),
-      question: question, // question here is a year
+      question: question,
       trivia: data[c][1][q].trivia( ),
       options: options( c, q )
     };
   }
   if ( req.query && req.query.answer && data[req.query.c] && data[req.query.c][1][req.query.q] ) {
-    var message = data[req.query.c][0] + ' ' + data[req.query.c][1][req.query.q].question( ) + ' ';
+    var message = data[req.query.c][0] + ' ' + ( data[req.query.c][1][req.query.q].year( ) || data[req.query.c][1][req.query.q].question( )) + ' ';
     if ( data[req.query.c][1][req.query.q].answer( ) === req.query.answer ) {
       r.result = 'Right!';
       message += 'correct';
