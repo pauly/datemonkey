@@ -1,0 +1,28 @@
+<div id="content">
+  <form>
+    {{#unless content.hidden.name}}
+      <label>What is your name? <input name="name" value="{{content.hidden.name}}" /></label>
+    {{/unless}}
+    {{#if content.score}}
+      <p>{{content.result}} <b>{{content.score}}</b></p>
+    {{/if}}
+    <p>{{content.category.title}} {{content.question.question}}</p>
+    {{#each content.hidden}}
+      {{#if this}}
+        <input type="hidden" name="{{@key}}" value="{{this}}" />
+      {{/if}}
+    {{/each}}
+    {{#each content.question.options}}
+      <button name="answer" type="submit" value="{{this.answer}}"><span>{{this.answer}}</span></button>
+    {{/each}}
+    <p>Make it:
+      {{#each content.difficulties}}
+        <label>
+          <input type="radio" name="difficulty" value="{{value}}" {{{checked}}}/>
+          {{label}}
+        </label>
+      {{/each}}
+    </p>
+    <p>{{content.category.explanation}}</p>
+  </form>
+</div>
