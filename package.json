@@ -12,5 +12,28 @@
   },
   "engines": {
     "node": "0.10.28"
-  }
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "description": "Date monkey, to give me some practice in dates for quizzes.",
+  "main": "''",
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pauly/datemonkey.git"
+  },
+  "keywords": [
+    "quiz",
+    "socket.io"
+  ],
+  "author": "pauly",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pauly/datemonkey/issues"
+  },
+  "homepage": "https://github.com/pauly/datemonkey#readme"
 }
