@@ -1,1 +1,15 @@
-.nodester.appconfig
+.sass-cache
+.jekyll-metadata
+node_modules
+package-lock.json
+data/*.xml
+data/*.dump
+.nyc_output
+Gemfile.lock
+coverage
+**/.DS_Store
+**/*.swp
+**/.*.swp
+_site/**
+broken.txt
+lhreport.html

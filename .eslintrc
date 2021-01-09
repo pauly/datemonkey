@@ -1,0 +1,25 @@
+{
+  "extends": "standard",
+  "plugins": [
+    "standard",
+    "mocha"
+  ],
+  "env": {
+    "es6": true,
+    "mocha": true,
+    "node": true
+  },
+  "globals": {
+    "expect": true,
+    "sandbox": true
+  },
+  "rules": {
+    "camelcase": "warn",
+    "object-shorthand": "error",
+    "mocha/no-exclusive-tests": "error",
+    "mocha/no-global-tests": "error",
+    "mocha/no-identical-title": "error",
+    "mocha/no-nested-tests": "error",
+    "mocha/no-sibling-hooks": "error"
+  }
+}
