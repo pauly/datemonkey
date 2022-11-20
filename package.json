@@ -5,7 +5,7 @@
   "dependencies": {
     "crypto": "1.0.1",
     "express": "4.17.1",
-    "hbs": "4.1.1",
+    "hbs": "4.2.0",
     "pagespeed": "0.0.5",
     "socket.io": "3.0.5",
     "stylus": "0.54.8"
