@@ -8,7 +8,7 @@
     "hbs": "4.1.1",
     "pagespeed": "0.0.5",
     "socket.io": "3.0.5",
-    "stylus": "0.54.8"
+    "stylus": "0.63.0"
   },
   "engines": {
     "node": "0.10.28"
